@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+*.log
+
+venv/
+.env
+
+dist/
+build/
+
+.idea/
+.vscode/
+
+*.swp

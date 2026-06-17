@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bookmarkhub"
+version = "0.1.0"
+description = "Modern bookmark manager with Nextcloud synchronization"
+authors = [
+    {name = "Stephan R."}
+]
+requires-python = ">=3.10"
+
+dependencies = [
+    "PyQt6",
+    "requests",
+    "keyring"
+]
