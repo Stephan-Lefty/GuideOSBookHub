@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=GuideOSBookHub
+Comment=Lesezeichen-Manager mit Cloud-Sync über einen frei wählbaren Anbieter (via rclone)
+Exec=guideosbookhub
+Icon=io.github.stephanlefty.GuideOSBookHub
+Terminal=false
+Categories=Utility;Office;
+StartupWMClass=guideosbookhub

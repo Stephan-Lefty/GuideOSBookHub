@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 
 from core import rclone
 from core.settings import Settings
+from gui.rclone_install_dialog import RcloneInstallDialog
 from gui.sync_worker import ConnectionTestWorker
 
 
@@ -23,11 +24,12 @@ class SettingsDialog(QDialog):
 
         if not rclone.is_rclone_installed():
             layout.addWidget(QLabel(
-                "rclone wurde nicht gefunden.\n\n"
-                "Bitte installieren, z.B. mit 'sudo apt install rclone' oder über\n"
-                "https://rclone.org/downloads/, und anschließend mindestens ein\n"
-                "Remote per 'rclone config' im Terminal einrichten."
+                "rclone wurde nicht gefunden. Ohne rclone kann kein Sync-Profil "
+                "angelegt werden."
             ))
+            install_button = QPushButton("rclone installieren")
+            install_button.clicked.connect(self._on_install_rclone)
+            layout.addWidget(install_button)
             close_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
             close_box.rejected.connect(self.reject)
             layout.addWidget(close_box)
@@ -204,3 +206,11 @@ class SettingsDialog(QDialog):
         self.test_button.setEnabled(True)
         prefix = "OK: " if success else "Fehler: "
         self.test_result_label.setText(prefix + message)
+
+    def _on_install_rclone(self):
+        RcloneInstallDialog(self).exec()
+        # Der obere Teil dieses Dialogs wurde nur für den "rclone fehlt"-Fall
+        # aufgebaut; nach einer (möglicherweise erfolgreichen) Installation
+        # einfach schließen, damit der Nutzer die Einstellungen neu öffnet
+        # und die volle Profil-Oberfläche bekommt.
+        self.accept()

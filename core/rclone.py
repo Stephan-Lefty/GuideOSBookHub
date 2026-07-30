@@ -1,6 +1,15 @@
+import os
 import shutil
 import subprocess
 from typing import Optional
+
+
+def _rclone_binary() -> str:
+    """Name/Pfad des zu verwendenden rclone-Binaries. In AppImage/Flatpak-
+    Builds sorgt bereits das Startskript bzw. der Sandbox-PATH dafür, dass
+    ein mitgeliefertes rclone gefunden wird (siehe packaging/); die
+    Umgebungsvariable dient nur als expliziter Override für Sonderfälle."""
+    return os.environ.get("GUIDEOSBOOKHUB_RCLONE", "rclone")
 
 
 class RcloneError(Exception):
@@ -31,7 +40,7 @@ class RcloneRemoteError(RcloneError):
 
 
 def _run(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
-    full_args = ["rclone", "--retries", "1"] + args
+    full_args = [_rclone_binary(), "--retries", "1"] + args
     try:
         result = subprocess.run(
             full_args, capture_output=True, text=True, timeout=timeout
@@ -49,8 +58,37 @@ def _run(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
     return result
 
 
+INSTALL_SCRIPT_URL = "https://rclone.org/install.sh"
+
+
 def is_rclone_installed() -> bool:
-    return shutil.which("rclone") is not None
+    return shutil.which(_rclone_binary()) is not None
+
+
+def install_rclone(timeout: int = 300) -> None:
+    """Installiert rclone systemweit über das offizielle Installationsskript.
+    Nutzt pkexec für die Rechteausweitung statt sudo/gksudo/kdesudo, da
+    PolicyKit auf praktisch jeder modernen Linux-Distribution und
+    Desktop-Umgebung vorhanden ist (zeigt automatisch den passenden
+    grafischen Passwort-Dialog von GNOME, KDE, XFCE, ...)."""
+
+    command = ["pkexec", "bash", "-c", f"curl -fsSL {INSTALL_SCRIPT_URL} | bash"]
+
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError:
+        raise RcloneError(
+            "pkexec wurde nicht gefunden. Bitte rclone manuell installieren, "
+            "z.B. mit 'sudo apt install rclone' oder über https://rclone.org/downloads/."
+        )
+    except subprocess.TimeoutExpired:
+        raise RcloneTimeout(command)
+
+    if result.returncode != 0:
+        raise RcloneRemoteError(
+            "Installation von rclone fehlgeschlagen oder abgebrochen.",
+            stderr=(result.stderr or "").strip(),
+        )
 
 
 def get_rclone_version() -> Optional[str]:

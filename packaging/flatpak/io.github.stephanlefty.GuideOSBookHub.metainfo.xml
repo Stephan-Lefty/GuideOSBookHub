@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.stephanlefty.GuideOSBookHub</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <!-- TODO: LICENSE-Datei im Projekt ist aktuell leer -- project_license
+       hier erst eintragen, sobald eine Lizenz für den Code gewählt wurde. -->
+  <project_license>LicenseRef-proprietary</project_license>
+  <name>GuideOSBookHub</name>
+  <summary>Lesezeichen-Manager mit Cloud-Sync über einen frei wählbaren Anbieter</summary>
+  <description>
+    <p>
+      GuideOSBookHub verwaltet Lesezeichen lokal und synchronisiert sie über
+      rclone mit einer frei wählbaren Cloud (Nextcloud/WebDAV, Proton Drive,
+      Dropbox, Google Drive, S3-kompatible Speicher u.v.m.). Mehrere
+      unabhängige Sync-Profile sind gleichzeitig möglich.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.stephanlefty.GuideOSBookHub.desktop</launchable>
+  <content_rating type="oars-1.1"/>
+</component>

@@ -1,13 +1,18 @@
 # GuideOSBookHub
 
-Ein Lesezeichen-Manager für Debian/Linux, der eigene Lesezeichen lokal
-verwaltet und sie über eine **frei wählbare Cloud** zwischen mehreren
-Geräten synchronisiert – Nextcloud/WebDAV, Proton Drive, Dropbox, Google
-Drive, S3-kompatible Speicher usw. Anders als das Schwesterprojekt
+Ein Lesezeichen-Manager für Linux, der eigene Lesezeichen lokal verwaltet
+und sie über eine **frei wählbare Cloud** zwischen mehreren Geräten
+synchronisiert – Nextcloud/WebDAV, Proton Drive, Dropbox, Google Drive,
+S3-kompatible Speicher usw. Anders als das Schwesterprojekt
 [NEXTBookmarks](../NEXTBookmarks) (Browser-Extension + eigene, fest auf
 Nextcloud zugeschnittene Server-App) ist GuideOSBookHub eine eigenständige
 Desktop-Anwendung mit eigener Lesezeichen-Verwaltung; es liest keine
 Browser-Lesezeichen.
+
+Die App selbst ist **distributions- und Desktop-unabhängig**: sie basiert
+auf PyQt6 (läuft identisch unter GNOME, KDE, XFCE, ...) und steht in vier
+Installationsformen zur Verfügung – von einem einzigen portablen AppImage
+bis zum nativen `.deb` für Debian/Ubuntu (siehe [Installation](#installation)).
 
 Die Cloud-Anbindung läuft nicht über Provider-eigenen Code, sondern über
 [rclone](https://rclone.org), das rund 70 Speicherdienste einheitlich
@@ -25,16 +30,64 @@ offizielle Dritt-API gibt.
   die Oberfläche nicht)
 - Zwei-Wege-Sync mit Konfliktlösung (neuere Änderung gewinnt, wie bei
   NEXTBookmarks), Löschungen werden über Tombstones nachvollzogen
+- Prüft beim Start, ob `rclone` vorhanden ist; falls nicht, öffnet sich ein
+  Dialog, der die Installation per Klick anbietet (siehe
+  [rclone-Installation](#rclone-installation))
 
 ## Voraussetzungen
 
-- Python 3.10+
-- PyQt6
-- [rclone](https://rclone.org) – Debian/Ubuntu: `sudo apt install rclone`
-  (für die aktuellste Proton-Drive-Unterstützung ggf. den Installer von
-  rclone.org verwenden: `curl https://rclone.org/install.sh | sudo bash`)
+- Python 3.10+ und PyQt6 (bei AppImage/Flatpak/.deb bereits enthalten)
+- [rclone](https://rclone.org) – wird nicht zwingend vorab benötigt: fehlt
+  es, bietet die App selbst eine Installation per Dialog an (Details siehe
+  unten). AppImage und Flatpak bringen ohnehin ein eigenes rclone mit.
 
 ## Installation
+
+Vier gleichwertige Wege stehen zur Auswahl – je nachdem, wie viel man
+selbst verwalten möchte:
+
+| Format | Distributions-unabhängig | Bringt rclone mit | Geeignet für |
+|---|---|---|---|
+| AppImage | ✅ jede x86_64-Distro | ✅ | Einzelne Datei, kein Root nötig |
+| Flatpak | ✅ jede Distro mit Flatpak | ✅ (im Sandbox) | Saubere Desktop-Integration |
+| `.deb` | Debian/Ubuntu und Derivate | – (`Recommends`) | Native apt-Integration |
+| pip/pipx | ✅ jede Distro mit Python 3.10+ | – | Entwicklung, volle Kontrolle |
+
+### AppImage (jede Distribution, x86_64)
+
+```bash
+./packaging/appimage/build.sh
+```
+
+Baut `packaging/appimage/build/GuideOSBookHub-x86_64.AppImage` – bündelt
+einen eigenen Python-Venv (inkl. PyQt6) sowie ein statisches rclone-Binary,
+läuft ohne Installation direkt per Doppelklick/`./GuideOSBookHub-x86_64.AppImage`.
+Voraussetzung zum Bauen: [appimagetool](https://github.com/AppImage/appimagetool/releases)
+im PATH.
+
+### Flatpak (jede Distribution mit Flatpak)
+
+```bash
+./packaging/flatpak/build.sh
+flatpak run io.github.stephanlefty.GuideOSBookHub
+```
+
+Baut und installiert das Flatpak für den aktuellen Nutzer, inkl. gebündeltem
+rclone im Sandbox. Voraussetzung: `flatpak` und `flatpak-builder`, sowie
+einmalig `org.freedesktop.Platform//23.08` + `org.freedesktop.Sdk//23.08` +
+`org.freedesktop.Sdk.Extension.python3//23.08` (siehe Kommentar im Skript).
+
+### `.deb`-Paket (Debian/Ubuntu und Derivate)
+
+```bash
+./packaging/deb/build.sh
+sudo apt install ./packaging/deb/build/guideosbookhub_0.1.0_all.deb
+```
+
+Installiert `guideosbookhub` systemweit inkl. Menüeintrag; rclone ist nur
+als `Recommends` eingetragen, nicht als harte Abhängigkeit.
+
+### pip/pipx (jede Distribution, für Entwicklung)
 
 ```bash
 pipx install .
@@ -50,14 +103,24 @@ pip install -e .
 
 Danach steht der Befehl `guideosbookhub` zur Verfügung.
 
-### Als Desktop-Anwendung einbinden
-
 ```bash
 cp guideosbookhub.desktop ~/.local/share/applications/
 ```
 
-Falls das Projektverzeichnis an einen anderen Ort verschoben wird, den
-`Icon=`-Pfad in `guideosbookhub.desktop` entsprechend anpassen.
+integriert die App zusätzlich ins Anwendungsmenü (Icon-Pfad ggf. anpassen,
+falls das Projektverzeichnis verschoben wird).
+
+## rclone-Installation
+
+AppImage und Flatpak bringen bereits ein eigenes, aktuelles rclone mit –
+hier ist nichts weiter zu tun. Bei `.deb`/pip/pipx wird beim ersten Start
+geprüft, ob ein System-`rclone` gefunden wird; falls nicht, erscheint ein
+Dialog mit einem "Installieren"-Button. Der Klick löst das offizielle
+rclone-Installationsskript aus, abgesichert über eine grafische
+PolicyKit-Rechteabfrage (`pkexec`) – funktioniert unabhängig von
+Distribution und Desktop-Umgebung, ganz ohne Terminal. Alternativ jederzeit
+manuell: `sudo apt install rclone` oder der Installer von
+[rclone.org](https://rclone.org/downloads/).
 
 ## Cloud-Remote einrichten
 
