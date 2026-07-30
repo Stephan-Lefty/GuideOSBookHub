@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#55C6F5"/>
+      <stop offset="100%" stop-color="#1C8CE0"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#7AD4FB"/>
+      <stop offset="100%" stop-color="#1D6FC2"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0A3D66" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect x="14" y="14" width="484" height="484" rx="108" fill="url(#bg)" filter="url(#shadow)"/>
+
+  <!-- Glanzlicht oben, dezent -->
+  <ellipse cx="256" cy="90" rx="190" ry="70" fill="#FFFFFF" opacity="0.10"/>
+
+  <!-- Lesezeichen-Band (Vordergrund, groß) -->
+  <path d="M 126 128 L 386 128 Q 416 128 416 158 L 416 420 L 256 340 L 96 420 L 96 158 Q 96 128 126 128 Z"
+        fill="url(#ribbon)" stroke="#12345F" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- Sync-Pfeile (weiß), mit größerem Zwischenraum zwischen den beiden Bögen -->
+  <path d="M 178.94 220.96 A 82 82 0 0 1 333.06 220.96"
+        fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round"/>
+  <path d="M 333.06 277.04 A 82 82 0 0 1 178.94 277.04"
+        fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round"/>
+  <polygon points="347.42,260.43 295.64,217.55 359.54,194.29" fill="#FFFFFF"/>
+  <polygon points="164.58,237.57 216.36,280.45 152.46,303.71" fill="#FFFFFF"/>
+</svg>

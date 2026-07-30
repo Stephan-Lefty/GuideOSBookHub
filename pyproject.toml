@@ -3,16 +3,17 @@ requires = ["setuptools>=65"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bookmarkhub"
+name = "guideosbookhub"
 version = "0.1.0"
-description = "Modern bookmark manager with Nextcloud synchronization"
+description = "Modern bookmark manager with cloud-agnostic synchronization via rclone"
 authors = [
     {name = "Stephan R."}
 ]
 requires-python = ">=3.10"
 
 dependencies = [
-    "PyQt6",
-    "requests",
-    "keyring"
+    "PyQt6"
 ]
+
+[project.scripts]
+guideosbookhub = "guideosbookhub:main"

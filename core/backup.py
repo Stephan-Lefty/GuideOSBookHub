@@ -5,7 +5,7 @@ import shutil
 
 BACKUP_DIR = (
     Path.home()
-    / ".bookmarkhub"
+    / ".guideosbookhub"
     / "backups"
 )
 
@@ -26,7 +26,7 @@ class BackupManager:
         target_file = (
             BACKUP_DIR
             /
-            f"bookmarkhub_{timestamp}.db"
+            f"guideosbookhub_{timestamp}.db"
         )
 
         shutil.copy2(
