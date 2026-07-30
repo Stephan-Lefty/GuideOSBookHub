@@ -7,7 +7,7 @@
 # (at your option) any later version. See the LICENSE file for details.
 
 import sys
-from pathlib import Path
+from importlib.resources import as_file, files
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
@@ -16,13 +16,20 @@ from core import rclone
 from gui.mainwindow import MainWindow
 from gui.rclone_install_dialog import RcloneInstallDialog
 
-ICON_PATH = Path(__file__).parent / "icons" / "icon-256.png"
+# importlib.resources statt eines Pfads relativ zu __file__, da Letzteres
+# nach einer echten (nicht-editable) pip/pipx-Installation ins Leere zeigt --
+# icons/ liegt im Quell-Checkout, wird aber von setuptools nicht automatisch
+# mitinstalliert. assets/ ist dagegen ein echtes Package mit package_data
+# (siehe setup.py) und funktioniert in Quellverzeichnis und Installation
+# gleichermaßen.
+ICON_RESOURCE = files("assets") / "icon-256.png"
 
 
 def main():
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(str(ICON_PATH)))
+    with as_file(ICON_RESOURCE) as icon_path:
+        app.setWindowIcon(QIcon(str(icon_path)))
 
     if not rclone.is_rclone_installed():
         RcloneInstallDialog().exec()

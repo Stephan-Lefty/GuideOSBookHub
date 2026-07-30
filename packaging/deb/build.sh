@@ -37,11 +37,8 @@ echo "==> Kopiere Python-Quellcode"
 cp "$PROJECT_ROOT/guideosbookhub.py" "$PKG_DIR/usr/lib/guideosbookhub/"
 cp -r "$PROJECT_ROOT/core" "$PKG_DIR/usr/lib/guideosbookhub/"
 cp -r "$PROJECT_ROOT/gui" "$PKG_DIR/usr/lib/guideosbookhub/"
+cp -r "$PROJECT_ROOT/assets" "$PKG_DIR/usr/lib/guideosbookhub/"
 find "$PKG_DIR/usr/lib/guideosbookhub" -name "__pycache__" -exec rm -rf {} +
-
-echo "==> Icon-Pfad in guideosbookhub.py auf installierten Ort umbiegen"
-sed -i 's#Path(__file__).parent / "icons" / "icon-256.png"#Path("/usr/share/icons/hicolor/256x256/apps/guideosbookhub.png")#' \
-    "$PKG_DIR/usr/lib/guideosbookhub/guideosbookhub.py"
 
 echo "==> Wrapper-Skript /usr/bin/guideosbookhub"
 cat > "$PKG_DIR/usr/bin/guideosbookhub" <<'EOF'
