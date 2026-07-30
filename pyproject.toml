@@ -9,6 +9,7 @@ description = "Modern bookmark manager with cloud-agnostic synchronization via r
 authors = [
     {name = "Stephan R."}
 ]
+license = {text = "GPL-3.0-or-later"}
 requires-python = ">=3.10"
 
 dependencies = [

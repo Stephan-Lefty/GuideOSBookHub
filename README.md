@@ -163,3 +163,7 @@ python3 guideosbookhub.py
 ```
 
 Tests liegen unter `tests/`.
+
+## Lizenz
+
+GPL-3.0-or-later, siehe [LICENSE](LICENSE).
