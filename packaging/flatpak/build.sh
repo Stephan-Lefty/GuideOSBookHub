@@ -7,8 +7,8 @@ set -euo pipefail
 #   - flatpak und flatpak-builder installiert
 #   - Runtime + SDK einmalig einrichten (nur beim ersten Mal nötig):
 #       flatpak install -y flathub org.freedesktop.Platform//24.08 \
-#                                  org.freedesktop.Sdk//24.08 \
-#                                  org.freedesktop.Sdk.Extension.python3//24.08
+#                                  org.freedesktop.Sdk//24.08
+#     (Python 3 ist bereits Teil des Sdk selbst, keine separate Extension nötig)
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$HERE/io.github.stephanlefty.GuideOSBookHub.json"

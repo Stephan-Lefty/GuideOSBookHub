@@ -102,8 +102,8 @@ flatpak run io.github.stephanlefty.GuideOSBookHub
 
 Builds and installs the Flatpak for the current user, including a
 sandboxed rclone. Requires `flatpak` and `flatpak-builder`, plus a one-time
-`org.freedesktop.Platform//24.08` + `org.freedesktop.Sdk//24.08` +
-`org.freedesktop.Sdk.Extension.python3//24.08` (see comment in the script).
+`org.freedesktop.Platform//24.08` + `org.freedesktop.Sdk//24.08`
+(see comment in the script).
 
 ### `.deb` package (Debian/Ubuntu and derivatives)
 
