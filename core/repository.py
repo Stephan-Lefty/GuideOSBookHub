@@ -57,6 +57,22 @@ class BookmarkRepository:
         )
         self.conn.commit()
 
+    def assign_unassigned_top_level_groups_to_profile(self, profile_id: str) -> int:
+        """Weist alle Top-Level-Ordner ohne Sync-Profil dem übergebenen
+        Profil zu (z.B. direkt nach dem Anlegen des ersten Cloud-Profils,
+        damit frisch aus dem Browser importierte Ordner ohne manuellen
+        Zwischenschritt mitsynchronisiert werden)."""
+        groups = self.conn.execute(
+            "SELECT id FROM groups WHERE parent_id IS NULL AND profile_id IS NULL"
+        ).fetchall()
+        for row in groups:
+            self.conn.execute(
+                "UPDATE groups SET profile_id = ?, modified = ? WHERE id = ?",
+                (profile_id, _now(), row["id"]),
+            )
+        self.conn.commit()
+        return len(groups)
+
     def delete_group(self, group_id: int, cascade: bool = True) -> None:
         if cascade:
             children = self.conn.execute(

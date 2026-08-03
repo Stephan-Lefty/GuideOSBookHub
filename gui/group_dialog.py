@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 
 from core.models import Group
 from core.settings import Settings
+from gui.qt_i18n import germanize_button_box
 
 LOCAL_PROFILE_LABEL = "Lokal (kein Sync)"
 
@@ -60,6 +61,7 @@ class AddEditGroupDialog(QDialog):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        germanize_button_box(buttons)
         buttons.accepted.connect(self._on_accept)
         buttons.rejected.connect(self.reject)
 

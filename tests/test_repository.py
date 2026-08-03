@@ -69,6 +69,20 @@ def test_upsert_bookmark_by_uid_inserts_then_updates(repo):
     assert repo.get_bookmark_by_uid("fixed-uid").title == "Geändert"
 
 
+def test_assign_unassigned_top_level_groups_to_profile(repo):
+    unassigned_top = repo.add_group("Neu importiert")
+    already_assigned = repo.add_group("Hat schon Profil", profile_id="profile-a")
+    sub = repo.add_group("Unterordner", parent_id=unassigned_top.id)  # kein Top-Level -> ignoriert
+
+    count = repo.assign_unassigned_top_level_groups_to_profile("profile-b")
+
+    assert count == 1
+    groups_by_id = {g.id: g for g in repo.list_groups()}
+    assert groups_by_id[unassigned_top.id].profile_id == "profile-b"
+    assert groups_by_id[already_assigned.id].profile_id == "profile-a"
+    assert groups_by_id[sub.id].profile_id is None
+
+
 def test_sync_state_roundtrip(repo):
     repo.set_sync_state("uid-1", "profile-a", "bookmark", "2026-01-01T00:00:00+00:00", "hash123")
 

@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 )
 
 from core.models import Bookmark, Group
+from gui.qt_i18n import germanize_button_box
 
 
 class AddEditBookmarkDialog(QDialog):
@@ -44,6 +45,7 @@ class AddEditBookmarkDialog(QDialog):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        germanize_button_box(buttons)
         buttons.accepted.connect(self._on_accept)
         buttons.rejected.connect(self.reject)
 

@@ -1,0 +1,90 @@
+name: Build & Release
+
+# Baut AppImage, Flatpak und .deb bei jedem Versions-Tag (z.B. "v0.2.0")
+# und hängt sie als Downloads an das zugehörige GitHub-Release an.
+# workflow_dispatch erlaubt zusätzlich einen manuellen Testlauf (baut alle
+# drei Formate, veröffentlicht aber kein Release, da kein Tag vorhanden ist).
+#
+# Wichtig: Vor dem Setzen eines Tags die Version in pyproject.toml auf
+# denselben Stand bringen (z.B. Tag "v0.2.0" -> version = "0.2.0"), sonst
+# trägt das gebaute .deb/AppImage/Flatpak eine abweichende interne Version.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-deb:
+    name: .deb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build .deb
+        run: ./packaging/deb/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-package
+          path: packaging/deb/build/*.deb
+
+  build-appimage:
+    name: AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install appimagetool
+        run: |
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -O /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
+      - name: Build AppImage
+        # appimagetool versucht sich sonst per FUSE selbst einzuhängen, was
+        # auf GitHub-Actions-Runnern ohne FUSE-Kernelmodul fehlschlägt.
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: ./packaging/appimage/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appimage
+          path: packaging/appimage/build/*.AppImage
+
+  build-flatpak:
+    name: Flatpak
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-23.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: GuideOSBookHub.flatpak
+          manifest-path: packaging/flatpak/io.github.stephanlefty.GuideOSBookHub.json
+          cache-key: flatpak-builder-${{ github.sha }}
+          upload-artifact: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-bundle
+          path: GuideOSBookHub.flatpak
+
+  release:
+    name: Release veröffentlichen
+    needs: [build-deb, build-appimage, build-flatpak]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Release erstellen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            deb-package/*.deb
+            appimage/*.AppImage
+            flatpak-bundle/*.flatpak

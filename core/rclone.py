@@ -113,16 +113,24 @@ def list_remotes() -> list[str]:
     return [line.strip().rstrip(":") for line in result.stdout.splitlines() if line.strip()]
 
 
+def _target(remote: str, path: str) -> str:
+    """rclone behandelt einen bloßen Dateisystempfad ohne 'remote:'-Präfix
+    bereits nativ als lokales Backend -- kein rclone-config-Eintrag nötig.
+    Ein leerer remote-String steht daher für 'lokaler Ordner/USB-Stick'
+    statt eines benannten Cloud-Remotes."""
+    return f"{remote}:{path}" if remote else path
+
+
 def check_remote_reachable(remote: str, path: str = "", timeout: int = 15) -> None:
     """Wirft RcloneRemoteError mit Klartext-Meldung, falls das Remote nicht
     erreichbar ist (Auth-Fehler, Netzwerkproblem, falscher Name, ...)."""
 
-    target = f"{remote}:{path}" if path else f"{remote}:"
+    target = _target(remote, path) if path else _target(remote, "")
     _run(["lsd", target], timeout=timeout)
 
 
 def push_file(local_path: str, remote: str, remote_path: str, timeout: int = 60) -> None:
-    _run(["copyto", local_path, f"{remote}:{remote_path}"], timeout=timeout)
+    _run(["copyto", local_path, _target(remote, remote_path)], timeout=timeout)
 
 
 def _remote_file_exists(remote: str, remote_path: str, timeout: int) -> bool:
@@ -137,7 +145,7 @@ def _remote_file_exists(remote: str, remote_path: str, timeout: int) -> bool:
     else:
         directory, filename = "", remote_path
 
-    target = f"{remote}:{directory}" if directory else f"{remote}:"
+    target = _target(remote, directory) if directory else _target(remote, "")
 
     try:
         result = _run(["lsf", target, "--files-only"], timeout=timeout)
@@ -149,6 +157,81 @@ def _remote_file_exists(remote: str, remote_path: str, timeout: int) -> bool:
     return filename in entries
 
 
+def normalize_webdav_url(url: str, vendor: str, user: str) -> str:
+    """Ergänzt bei Nextcloud/ownCloud automatisch den WebDAV-Pfad, falls der
+    Nutzer nur die nackte Domain eingegeben hat (z.B. 'https://cloud.example.com'
+    statt 'https://cloud.example.com/remote.php/dav/files/user/'). Ohne
+    diesen Pfad antwortet der Server nur mit '405 Not Allowed', da auf der
+    Domain selbst kein WebDAV läuft."""
+    url = url.rstrip("/")
+    if "/remote.php/" in url:
+        return f"{url}/" if vendor in ("nextcloud", "owncloud") else url
+    if vendor == "nextcloud":
+        return f"{url}/remote.php/dav/files/{user}/"
+    if vendor == "owncloud":
+        return f"{url}/remote.php/webdav/"
+    return url
+
+
+def create_webdav_remote(name: str, url: str, vendor: str, user: str, password: str,
+                          timeout: int = 30) -> None:
+    """Legt ein WebDAV-Remote (Nextcloud/ownCloud/generisch) nicht-interaktiv
+    an -- das GUI-Äquivalent zum manuellen `rclone config`-Dialog im
+    Terminal. --obscure lässt rclone das Klartext-Passwort selbst vor dem
+    Speichern in der Config-Datei verschlüsseln (identisch zum Verhalten
+    des interaktiven Assistenten)."""
+    _run(
+        ["config", "create", name, "webdav",
+         "url", url, "vendor", vendor, "user", user, "pass", password,
+         "--obscure"],
+        timeout=timeout,
+    )
+
+
+def create_protondrive_remote(name: str, email: str, password: str, twofa: str = "",
+                               mailbox_password: str = "", timeout: int = 30) -> None:
+    """Legt ein Proton-Drive-Remote nicht-interaktiv an. --obscure deckt
+    sowohl 'pass' als auch 'mailbox-password' automatisch ab, da rclone
+    beide Felder im protondrive-Backend als Passwort-Felder kennzeichnet."""
+    args = ["config", "create", name, "protondrive", "username", email, "pass", password]
+    if twofa:
+        args += ["2fa", twofa]
+    if mailbox_password:
+        args += ["mailbox-password", mailbox_password]
+    args.append("--obscure")
+    _run(args, timeout=timeout)
+
+
+def authorize_oauth(backend: str, timeout: int = 180) -> str:
+    """Führt 'rclone authorize <backend>' aus -- öffnet den Standardbrowser
+    für den OAuth-Login und liefert das dabei erzeugte Token als rohen
+    JSON-String zurück, den create_oauth_remote() übernehmen kann."""
+    result = _run(["authorize", backend], timeout=timeout)
+    return _extract_oauth_token(result.stdout)
+
+
+def _extract_oauth_token(output: str) -> str:
+    for line in output.splitlines():
+        line = line.strip()
+        if line.startswith("{") and line.endswith("}"):
+            return line
+    raise RcloneRemoteError("Konnte OAuth-Token nicht aus rclone-Ausgabe extrahieren.")
+
+
+def create_oauth_remote(name: str, backend: str, token_json: str, timeout: int = 30) -> None:
+    _run(["config", "create", name, backend, "config_token", token_json], timeout=timeout)
+
+
+def is_local_folder_writable(path: str) -> bool:
+    """Für den USB-Stick/Lokaler-Ordner-Zweig: reine Dateisystemprüfung,
+    kein rclone-Aufruf nötig, da es kein Remote-Konzept gibt."""
+    return os.path.isdir(path) and os.access(path, os.W_OK)
+
+
+def delete_remote(name: str, timeout: int = 15) -> None:
+    _run(["config", "delete", name], timeout=timeout)
+
+
 def pull_file(remote: str, remote_path: str, timeout: int = 60) -> Optional[str]:
     """Gibt den Dateiinhalt zurück, oder None, wenn die Datei auf dem Remote
     noch nicht existiert (z.B. beim allerersten Sync)."""
@@ -156,5 +239,5 @@ def pull_file(remote: str, remote_path: str, timeout: int = 60) -> Optional[str]
     if not _remote_file_exists(remote, remote_path, timeout):
         return None
 
-    result = _run(["cat", f"{remote}:{remote_path}"], timeout=timeout)
+    result = _run(["cat", _target(remote, remote_path)], timeout=timeout)
     return result.stdout

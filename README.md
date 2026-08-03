@@ -1,45 +1,66 @@
 # GuideOSBookHub
 
-Ein Lesezeichen-Manager für Linux, der eigene Lesezeichen lokal verwaltet
-und sie über eine **frei wählbare Cloud** zwischen mehreren Geräten
-synchronisiert – Nextcloud/WebDAV, Proton Drive, Dropbox, Google Drive,
-S3-kompatible Speicher usw. Anders als das Schwesterprojekt
-[NEXTBookmarks](../NEXTBookmarks) (Browser-Extension + eigene, fest auf
-Nextcloud zugeschnittene Server-App) ist GuideOSBookHub eine eigenständige
-Desktop-Anwendung mit eigener Lesezeichen-Verwaltung; es liest keine
-Browser-Lesezeichen.
+*[English version](README.en.md)*
+
+Eine Sync-Brücke für Browser-Lesezeichen unter Linux: Anlegen, Ändern und
+Löschen einzelner Lesezeichen bleibt dort, wo es hingehört – im Browser
+selbst. GuideOSBookHub übernimmt drei Dinge drumherum:
+
+1. **Import** – liest die Lesezeichen automatisch direkt aus dem
+   Browser-Profil (kein manueller Export nötig).
+2. **Cloud-/Stick-Sync** – hält sie über eine frei wählbare Cloud oder
+   einen USB-Stick zwischen mehreren Geräten synchron.
+3. **Rück-Export** – schreibt den synchronisierten Bestand bei Bedarf in
+   einen (auch anderen) Browser zurück.
+
+Anders als das Schwesterprojekt [NEXTBookmarks](../NEXTBookmarks)
+(Browser-Extension + eigene, fest auf Nextcloud zugeschnittene
+Server-App) ist GuideOSBookHub eine eigenständige Desktop-Anwendung ohne
+eigene Lesezeichen-Verwaltungsoberfläche und ohne Festlegung auf einen
+einzelnen Cloud-Anbieter.
+
+<p align="center">
+  <img src="docs/screenshots/home.png" alt="GuideOSBookHub Startseite" width="420">
+  <img src="docs/screenshots/cloud-sync-setup.png" alt="Cloud-/Stick-Sync einrichten" width="420">
+</p>
 
 Die App selbst ist **distributions- und Desktop-unabhängig**: sie basiert
-auf PyQt6 (läuft identisch unter GNOME, KDE, XFCE, ...) und steht in vier
-Installationsformen zur Verfügung – von einem einzigen portablen AppImage
-bis zum nativen `.deb` für Debian/Ubuntu (siehe [Installation](#installation)).
-
-Die Cloud-Anbindung läuft nicht über Provider-eigenen Code, sondern über
-[rclone](https://rclone.org), das rund 70 Speicherdienste einheitlich
-unterstützt – u.a. auch Proton Drive, für das es (Stand 2026) keine
-offizielle Dritt-API gibt.
+auf PyQt6 (läuft identisch unter GNOME, KDE, XFCE, ...), unterstützt
+**Deutsch und Englisch** (jederzeit umschaltbar) sowie Hell-/Dunkelmodus,
+und steht in vier Installationsformen zur Verfügung (siehe
+[Installation](#installation)).
 
 ## Funktionsumfang
 
-- Lesezeichen und Ordner lokal anlegen, bearbeiten, löschen, favorisieren
-- Suche über Titel, URL und Tags
+- **Automatischer Browser-Import**: erkennt Vivaldi, Google Chrome,
+  Chromium, Brave, Microsoft Edge und Opera automatisch am Standard-Profil-
+  pfad und importiert direkt – für alles andere (z.B. Firefox) steht der
+  manuelle HTML-Export als Rückfalloption bereit.
+- **Cloud-Sync-Assistent** direkt in der App, keine Terminal-Kenntnisse
+  nötig: WebDAV/Nextcloud/ownCloud (Zugangsdaten), Proton Drive
+  (Zugangsdaten + optionale 2FA), Google Drive, Microsoft OneDrive,
+  Dropbox, pCloud (jeweils per Browser-Login) sowie ein lokaler Ordner
+  oder USB-Stick (kein Cloud-Konto nötig).
+- **Rück-Export in den Browser** mit drei wählbaren Strategien:
+  Zusammenführen, in einen gesonderten Ordner, oder komplettes Ersetzen –
+  mit Sicherheitsabfrage, ob der Ziel-Browser wirklich geschlossen ist.
 - Mehrere unabhängige **Sync-Profile** gleichzeitig (z.B. "Arbeit" →
   Nextcloud, "Privat" → Proton Drive) – jeder Top-Level-Ordner kann einem
-  Profil zugewiesen werden, Unterordner erben davon
+  Profil zugewiesen werden, Unterordner erben davon.
 - Automatischer und manueller Sync, läuft im Hintergrund-Thread (blockiert
-  die Oberfläche nicht)
-- Zwei-Wege-Sync mit Konfliktlösung (neuere Änderung gewinnt, wie bei
-  NEXTBookmarks), Löschungen werden über Tombstones nachvollzogen
+  die Oberfläche nicht), mit Fortschrittsanzeige.
+- Zwei-Wege-Sync mit Konfliktlösung (neuere Änderung gewinnt), Löschungen
+  werden über Tombstones nachvollzogen.
 - Prüft beim Start, ob `rclone` vorhanden ist; falls nicht, öffnet sich ein
   Dialog, der die Installation per Klick anbietet (siehe
-  [rclone-Installation](#rclone-installation))
+  [rclone-Installation](#rclone-installation)).
 
 ## Voraussetzungen
 
 - Python 3.10+ und PyQt6 (bei AppImage/Flatpak/.deb bereits enthalten)
 - [rclone](https://rclone.org) – wird nicht zwingend vorab benötigt: fehlt
-  es, bietet die App selbst eine Installation per Dialog an (Details siehe
-  unten). AppImage und Flatpak bringen ohnehin ein eigenes rclone mit.
+  es, bietet die App selbst eine Installation per Dialog an. AppImage und
+  Flatpak bringen ohnehin ein eigenes rclone mit.
 
 ## Installation
 
@@ -122,30 +143,22 @@ Distribution und Desktop-Umgebung, ganz ohne Terminal. Alternativ jederzeit
 manuell: `sudo apt install rclone` oder der Installer von
 [rclone.org](https://rclone.org/downloads/).
 
-## Cloud-Remote einrichten
+## Erste Schritte
 
-Die eigentliche Verbindung zu einer Cloud (inkl. OAuth-Login/2FA bei
-Proton Drive, Google Drive, Dropbox, ...) richtet man einmalig selbst über
-rclone im Terminal ein:
+Beim allerersten Start führt GuideOSBookHub direkt durch die Einrichtung:
 
-```bash
-rclone config
-```
+1. **Browser wählen** – die Lesezeichen werden automatisch gefunden und
+   importiert.
+2. **Cloud- oder Stick-Sync einrichten** (optional, jederzeit später über
+   die Startseite nachholbar) – Anbieter auswählen, Zugangsdaten eingeben
+   oder im Browser anmelden.
 
-Beispiele:
-
-- **Proton Drive**: Remote-Typ `protondrive` wählen, Zugangsdaten eingeben
-- **Nextcloud/ownCloud**: Remote-Typ `webdav`, Vendor `nextcloud`, Server-URL
-  + App-Passwort eingeben
-- **Dropbox/Google Drive/S3**: jeweiliger Remote-Typ, Browser-Login folgen
-
-Danach in GuideOSBookHub unter **Einstellungen** ein neues Sync-Profil
-anlegen: Namen vergeben, das gerade eingerichtete Remote auswählen (Button
-"Remotes aktualisieren", falls es noch nicht in der Liste erscheint),
-Dateipfad/-namen und Sync-Intervall festlegen. Einen Ordner in der App über
-"Ordner hinzufügen"/"bearbeiten" als Top-Level-Ordner diesem Profil
-zuweisen, damit sein Inhalt tatsächlich mitgesynct wird – neu angelegte
-Ordner sind standardmäßig rein lokal.
+Beides lässt sich jederzeit erneut über die Startseite aufrufen
+("Aus Browser in den Hub importieren", "Cloud-/Stick-Sync einrichten",
+"Aus Hub in neuen Browser importieren"). Für JottaCloud und iCloud Drive,
+die der Assistent (Stand jetzt) nicht abdeckt, bleibt der Weg über ein
+manuell mit `rclone config` eingerichtetes Remote – anschließend in den
+**Einstellungen** über "Neues Profil" verwenden.
 
 ## Bekannte Grenzen
 
@@ -154,15 +167,19 @@ Ordner sind standardmäßig rein lokal.
   persönliches Tool ein akzeptabler Kompromiss).
 - Konfliktlösung ist bewusst einfach gehalten (neuere Änderung gewinnt,
   ohne Rückfrage) – siehe `core/sync.py`.
+- JottaCloud und iCloud Drive sind im Einrichtungs-Assistenten bewusst
+  nicht abgedeckt (unzuverlässige nicht-interaktive rclone-Einrichtung);
+  funktionieren aber weiterhin über manuell per `rclone config`
+  eingerichtete Remotes.
 
 ## Entwicklung
 
 ```bash
-pip install -e .
+pip install -e . pytest
 python3 guideosbookhub.py
 ```
 
-Tests liegen unter `tests/`.
+Tests liegen unter `tests/` (`python -m pytest -q`).
 
 ## Lizenz
 

@@ -13,8 +13,9 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from core import rclone
-from gui.mainwindow import MainWindow
+from gui.home_window import HomeWindow
 from gui.rclone_install_dialog import RcloneInstallDialog
+from gui.theme import apply_theme
 
 # importlib.resources statt eines Pfads relativ zu __file__, da Letzteres
 # nach einer echten (nicht-editable) pip/pipx-Installation ins Leere zeigt --
@@ -28,13 +29,14 @@ ICON_RESOURCE = files("assets") / "icon-256.png"
 def main():
 
     app = QApplication(sys.argv)
+    apply_theme(app)
     with as_file(ICON_RESOURCE) as icon_path:
         app.setWindowIcon(QIcon(str(icon_path)))
 
     if not rclone.is_rclone_installed():
         RcloneInstallDialog().exec()
 
-    window = MainWindow()
+    window = HomeWindow()
 
     window.show()
 

@@ -14,7 +14,9 @@ class Settings:
 
     DEFAULT_SETTINGS = {
         "theme": "system",
-        "profiles": []
+        "language": "de",
+        "profiles": [],
+        "onboarding_shown": False,
     }
 
     @classmethod
@@ -33,7 +35,9 @@ class Settings:
             settings = json.load(f)
 
         settings.setdefault("theme", cls.DEFAULT_SETTINGS["theme"])
+        settings.setdefault("language", cls.DEFAULT_SETTINGS["language"])
         settings.setdefault("profiles", [])
+        settings.setdefault("onboarding_shown", False)
 
         return settings
 
@@ -94,4 +98,28 @@ class Settings:
     def remove_profile(cls, profile_id: str) -> None:
         settings = cls.load()
         settings["profiles"] = [p for p in settings["profiles"] if p["id"] != profile_id]
+        cls.save(settings)
+
+    # ---------- Onboarding ----------
+
+    @classmethod
+    def is_onboarding_shown(cls) -> bool:
+        return cls.load()["onboarding_shown"]
+
+    @classmethod
+    def mark_onboarding_shown(cls) -> None:
+        settings = cls.load()
+        settings["onboarding_shown"] = True
+        cls.save(settings)
+
+    # ---------- Sprache ----------
+
+    @classmethod
+    def get_language(cls) -> str:
+        return cls.load()["language"]
+
+    @classmethod
+    def set_language(cls, language: str) -> None:
+        settings = cls.load()
+        settings["language"] = language
         cls.save(settings)

@@ -5,14 +5,19 @@ from PyQt6.QtGui import QAction, QDesktopServices
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QSplitter, QTreeWidget,
     QTreeWidgetItem, QTableWidget, QTableWidgetItem, QLineEdit, QToolBar,
-    QMessageBox, QAbstractItemView, QHeaderView, QStatusBar
+    QMessageBox, QAbstractItemView, QHeaderView, QStatusBar, QFileDialog
 )
 
+from core import rclone
 from core.database import Database
+from core.importer import import_into_repository, parse_netscape_html
 from core.repository import BookmarkRepository
 from core.settings import Settings
 from gui.bookmark_dialog import AddEditBookmarkDialog
+from gui.browser_import_dialog import BrowserImportDialog
+from gui.cloud_setup_dialog import CloudSetupDialog
 from gui.group_dialog import AddEditGroupDialog
+from gui.qt_i18n import confirm_yes_no
 from gui.settings_dialog import SettingsDialog
 from gui.sync_worker import SyncWorker
 
@@ -39,6 +44,9 @@ class MainWindow(QMainWindow):
         self._reload_bookmarks()
         self._start_auto_sync_timer()
 
+        if not Settings.is_onboarding_shown():
+            QTimer.singleShot(0, self._show_onboarding)
+
     # ---------- UI-Aufbau ----------
 
     def _build_ui(self):
@@ -52,6 +60,8 @@ class MainWindow(QMainWindow):
             ("Löschen", self._on_delete_bookmark),
             ("URL öffnen", self._on_open_url),
             ("Favorit umschalten", self._on_toggle_favorite),
+            ("Importieren…", self._on_import_bookmarks),
+            ("Aus Browser importieren…", self._on_import_from_browser),
         ]
         for label, handler in actions:
             action = QAction(label, self)
@@ -194,10 +204,10 @@ class MainWindow(QMainWindow):
         bookmark_id = self._current_bookmark_id()
         if bookmark_id is None:
             return
-        confirm = QMessageBox.question(
+        confirmed = confirm_yes_no(
             self, "Lesezeichen löschen", "Dieses Lesezeichen wirklich löschen?"
         )
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirmed:
             self.repo.delete_bookmark(bookmark_id)
             self._reload_bookmarks()
 
@@ -226,10 +236,53 @@ class MainWindow(QMainWindow):
             self.repo.add_group(name, parent_id=parent_id, profile_id=profile_id)
             self._reload_groups()
 
+    # ---------- Import ----------
+
+    def _on_import_bookmarks(self):
+        path, _filter = QFileDialog.getOpenFileName(
+            self, "Lesezeichen importieren", "", "HTML-Dateien (*.html *.htm)"
+        )
+        if not path:
+            return
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                html_text = f.read()
+            root = parse_netscape_html(html_text)
+            result = import_into_repository(self.repo, root)
+        except OSError as error:
+            QMessageBox.warning(self, "Import fehlgeschlagen", str(error))
+            return
+
+        self._reload_groups()
+        self._reload_bookmarks()
+
+        QMessageBox.information(
+            self, "Import abgeschlossen",
+            f"{result.groups_created} Ordner und {result.bookmarks_created} Lesezeichen "
+            f"importiert, {result.bookmarks_skipped} Duplikate übersprungen."
+        )
+
+    def _on_import_from_browser(self):
+        dialog = BrowserImportDialog(self.repo, first_run=False, parent=self)
+        if dialog.exec():
+            self._reload_groups()
+            self._reload_bookmarks()
+
+    def _show_onboarding(self):
+        BrowserImportDialog(self.repo, first_run=True, parent=self).exec()
+        self._reload_groups()
+        self._reload_bookmarks()
+
+        if rclone.is_rclone_installed():
+            CloudSetupDialog(self.repo, first_run=True, parent=self).exec()
+
+        Settings.mark_onboarding_shown()
+
     # ---------- Einstellungen / Sync ----------
 
     def _on_open_settings(self):
-        dialog = SettingsDialog(parent=self)
+        dialog = SettingsDialog(self.repo, parent=self)
         dialog.exec()
 
     def _on_sync_now(self):
