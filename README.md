@@ -1,10 +1,23 @@
-# GuideOSBookHub
+[Deutsch](README.md) | [English](README.en.md)
 
-*[English version](README.en.md)*
+# GuideOSBookHub
 
 Eine Sync-Brücke für Browser-Lesezeichen unter Linux: Anlegen, Ändern und
 Löschen einzelner Lesezeichen bleibt dort, wo es hingehört – im Browser
-selbst. GuideOSBookHub übernimmt drei Dinge drumherum:
+selbst.
+
+Dieses Projekt ist in Zusammenarbeit mit [Claude](https://claude.com)
+entstanden.
+
+## Wie es funktioniert
+
+```
+Vivaldi/Chrome/Edge/...  <-->  GuideOSBookHub  <-->  Cloud oder USB-Stick
+   (Browser-Profil)         (Import, Sync,           (via rclone, 70+
+                              Rück-Export)              Speicherdienste)
+```
+
+GuideOSBookHub übernimmt drei Dinge:
 
 1. **Import** – liest die Lesezeichen automatisch direkt aus dem
    Browser-Profil (kein manueller Export nötig).
@@ -13,22 +26,19 @@ selbst. GuideOSBookHub übernimmt drei Dinge drumherum:
 3. **Rück-Export** – schreibt den synchronisierten Bestand bei Bedarf in
    einen (auch anderen) Browser zurück.
 
-Anders als das Schwesterprojekt [NEXTBookmarks](../NEXTBookmarks)
+Anders als das Schwesterprojekt [NEXTBookmarks](https://github.com/Stephan-Lefty/nextbookmarks)
 (Browser-Extension + eigene, fest auf Nextcloud zugeschnittene
 Server-App) ist GuideOSBookHub eine eigenständige Desktop-Anwendung ohne
 eigene Lesezeichen-Verwaltungsoberfläche und ohne Festlegung auf einen
 einzelnen Cloud-Anbieter.
-
-<p align="center">
-  <img src="docs/screenshots/home.png" alt="GuideOSBookHub Startseite" width="420">
-  <img src="docs/screenshots/cloud-sync-setup.png" alt="Cloud-/Stick-Sync einrichten" width="420">
-</p>
 
 Die App selbst ist **distributions- und Desktop-unabhängig**: sie basiert
 auf PyQt6 (läuft identisch unter GNOME, KDE, XFCE, ...), unterstützt
 **Deutsch und Englisch** (jederzeit umschaltbar) sowie Hell-/Dunkelmodus,
 und steht in vier Installationsformen zur Verfügung (siehe
 [Installation](#installation)).
+
+![Startseite](docs/screenshots/home.png)
 
 ## Funktionsumfang
 
@@ -108,6 +118,11 @@ sudo apt install ./packaging/deb/build/guideosbookhub_0.1.0_all.deb
 Installiert `guideosbookhub` systemweit inkl. Menüeintrag; rclone ist nur
 als `Recommends` eingetragen, nicht als harte Abhängigkeit.
 
+Alternativ: bei jedem Versions-Tag (`vX.Y.Z`) baut eine GitHub-Actions-
+Pipeline AppImage, Flatpak und `.deb` automatisch und hängt sie an das
+zugehörige [Release](https://github.com/Stephan-Lefty/GuideOSBookHub/releases)
+an – kein eigenes Bauen nötig.
+
 ### pip/pipx (jede Distribution, für Entwicklung)
 
 ```bash
@@ -153,12 +168,38 @@ Beim allerersten Start führt GuideOSBookHub direkt durch die Einrichtung:
    die Startseite nachholbar) – Anbieter auswählen, Zugangsdaten eingeben
    oder im Browser anmelden.
 
+![Cloud-/Stick-Sync einrichten](docs/screenshots/cloud-sync-setup.png)
+
 Beides lässt sich jederzeit erneut über die Startseite aufrufen
 ("Aus Browser in den Hub importieren", "Cloud-/Stick-Sync einrichten",
 "Aus Hub in neuen Browser importieren"). Für JottaCloud und iCloud Drive,
 die der Assistent (Stand jetzt) nicht abdeckt, bleibt der Weg über ein
 manuell mit `rclone config` eingerichtetes Remote – anschließend in den
 **Einstellungen** über "Neues Profil" verwenden.
+
+## Ordnerstruktur
+
+```
+GuideOSBookHub/
+├── core/                       # Reine Logik, ohne Qt-Abhängigkeit
+│   ├── browser_bookmarks.py      # Chromium-Bookmarks lesen/schreiben
+│   ├── importer.py               # Netscape-HTML-Import (Firefox-Fallback)
+│   ├── cloud_providers.py        # Anbieter-Registry (WebDAV, Proton Drive, ...)
+│   ├── rclone.py                 # Alle rclone-Subprozessaufrufe
+│   ├── sync.py                   # Zwei-Wege-Sync-Engine
+│   ├── repository.py             # SQLite-Zugriff
+│   ├── settings.py               # Einstellungen (JSON)
+│   └── i18n.py                   # Deutsch/Englisch-Übersetzungen
+├── gui/                        # PyQt6-Oberfläche
+│   ├── home_window.py            # Startseite
+│   ├── browser_import_dialog.py
+│   ├── cloud_setup_dialog.py
+│   ├── export_to_browser_dialog.py
+│   ├── settings_dialog.py
+│   └── theme.py                  # Hell-/Dunkelmodus-Stylesheet
+├── packaging/                  # Bau-Skripte für AppImage/Flatpak/.deb
+└── tests/
+```
 
 ## Bekannte Grenzen
 
@@ -180,6 +221,12 @@ python3 guideosbookhub.py
 ```
 
 Tests liegen unter `tests/` (`python -m pytest -q`).
+
+## Bugs melden
+
+Fehler und Ideen für nächste Schritte bitte unter
+[github.com/Stephan-Lefty/GuideOSBookHub/issues](https://github.com/Stephan-Lefty/GuideOSBookHub/issues)
+eintragen.
 
 ## Lizenz
 
