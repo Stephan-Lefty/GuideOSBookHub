@@ -32,6 +32,9 @@
         {
             "name": "guideosbookhub",
             "buildsystem": "simple",
+            "build-options": {
+                "build-args": ["--share=network"]
+            },
             "build-commands": [
                 "pip3 install --prefix=/app --no-build-isolation PyQt6 .",
                 "install -Dm644 packaging/flatpak/io.github.stephanlefty.GuideOSBookHub.desktop /app/share/applications/io.github.stephanlefty.GuideOSBookHub.desktop",
