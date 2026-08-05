@@ -1,4 +1,4 @@
-[Deutsch](README.md) | [English](README.en.md)
+[Deutsch](README.md) | [English](README.en.md) | [Changelog](#changelog)
 
 # GuideOSBookHub
 
@@ -214,6 +214,21 @@ python3 guideosbookhub.py
 ```
 
 Tests live under `tests/` (`python -m pytest -q`).
+
+## Changelog
+
+Refers to the version number in `pyproject.toml`.
+
+### 0.1.0
+Initial version:
+- Automatic bookmark import from Vivaldi, Chrome, Chromium, Brave, Edge, and Opera; manual HTML export as a fallback (e.g. for Firefox).
+- Cloud sync wizard for WebDAV/Nextcloud/ownCloud, Proton Drive, Google Drive, OneDrive, Dropbox, pCloud, and a local folder/USB stick, via rclone.
+- Export back to the browser with three strategies (merge, separate folder, full replace), with a confirmation prompt.
+- Multiple independent sync profiles at once, assignable per top-level folder.
+- Automatic and manual two-way sync on a background thread with conflict resolution and tombstone-based deletion tracking.
+- Automatic rclone detection with an install dialog if it's missing.
+- Distro- and desktop-independent (PyQt6), light/dark mode, switchable German and English.
+- Four installation forms: AppImage, Flatpak, .deb, pip/pipx.
 
 ## Reporting bugs
 

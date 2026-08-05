@@ -1,4 +1,4 @@
-[Deutsch](README.md) | [English](README.en.md)
+[Deutsch](README.md) | [English](README.en.md) | [Änderungsprotokoll](#änderungsprotokoll)
 
 # GuideOSBookHub
 
@@ -221,6 +221,21 @@ python3 guideosbookhub.py
 ```
 
 Tests liegen unter `tests/` (`python -m pytest -q`).
+
+## Änderungsprotokoll
+
+Bezieht sich auf die Versionsnummer in `pyproject.toml`.
+
+### 0.1.0
+Erste Version:
+- Automatischer Lesezeichen-Import aus Vivaldi, Chrome, Chromium, Brave, Edge und Opera; manueller HTML-Export als Rückfalloption (z.B. für Firefox).
+- Cloud-Sync-Assistent für WebDAV/Nextcloud/ownCloud, Proton Drive, Google Drive, OneDrive, Dropbox, pCloud sowie lokalen Ordner/USB-Stick, via rclone.
+- Rück-Export in den Browser mit drei Strategien (Zusammenführen, gesonderter Ordner, komplettes Ersetzen) inkl. Sicherheitsabfrage.
+- Mehrere unabhängige Sync-Profile gleichzeitig, pro Top-Level-Ordner zuweisbar.
+- Automatischer und manueller Zwei-Wege-Sync im Hintergrund-Thread mit Konfliktlösung und Tombstone-basierter Löschverfolgung.
+- Automatische rclone-Erkennung mit Installationsdialog, falls nicht vorhanden.
+- Distributions- und Desktop-unabhängig (PyQt6), Hell-/Dunkelmodus, Deutsch und Englisch umschaltbar.
+- Vier Installationsformen: AppImage, Flatpak, .deb, pip/pipx.
 
 ## Bugs melden
 
