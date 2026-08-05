@@ -23,26 +23,56 @@ class BrowserDefinition:
 CHROMIUM_BROWSERS = [
     BrowserDefinition(
         "vivaldi", "Vivaldi",
-        [".config/vivaldi/Default/Bookmarks"], ["vivaldi", "vivaldi-bin"],
+        [
+            ".config/vivaldi/Default/Bookmarks",
+            ".var/app/com.vivaldi.Vivaldi/config/vivaldi/Default/Bookmarks",
+        ],
+        ["vivaldi", "vivaldi-bin"],
     ),
     BrowserDefinition(
         "chrome", "Google Chrome",
-        [".config/google-chrome/Default/Bookmarks"], ["chrome", "google-chrome"],
+        [
+            ".config/google-chrome/Default/Bookmarks",
+            ".var/app/com.google.Chrome/config/google-chrome/Default/Bookmarks",
+        ],
+        ["chrome", "google-chrome"],
     ),
     BrowserDefinition(
         "chromium", "Chromium",
-        [".config/chromium/Default/Bookmarks"], ["chromium", "chromium-browse"],
+        [
+            ".config/chromium/Default/Bookmarks",
+            ".var/app/org.chromium.Chromium/config/chromium/Default/Bookmarks",
+        ],
+        ["chromium", "chromium-browse"],
     ),
     BrowserDefinition(
         "brave", "Brave",
-        [".config/BraveSoftware/Brave-Browser/Default/Bookmarks"],
+        [
+            ".config/BraveSoftware/Brave-Browser/Default/Bookmarks",
+            ".var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser/Default/Bookmarks",
+        ],
         ["brave", "brave-browser"],
     ),
     BrowserDefinition(
         "edge", "Microsoft Edge",
-        [".config/microsoft-edge/Default/Bookmarks"], ["msedge", "microsoft-edge"],
+        [
+            ".config/microsoft-edge/Default/Bookmarks",
+            ".var/app/com.microsoft.Edge/config/microsoft-edge/Default/Bookmarks",
+        ],
+        ["msedge", "microsoft-edge"],
     ),
-    BrowserDefinition("opera", "Opera", [".config/opera/Bookmarks"], ["opera"]),
+    BrowserDefinition(
+        "opera", "Opera",
+        [
+            # "Default" fehlte hier bisher -- Opera legt seine Bookmarks-Datei wie
+            # jeder andere Chromium-Fork im Profilordner ab, nicht direkt im
+            # Vendor-Verzeichnis. Zusätzlich der Flatpak-Sandbox-Pfad
+            # (~/.var/app/<id>/...), da Opera auf Flathub nur als Flatpak vertrieben wird.
+            ".config/opera/Default/Bookmarks",
+            ".var/app/com.opera.Opera/config/opera/Default/Bookmarks",
+        ],
+        ["opera"],
+    ),
 ]
 
 
@@ -51,6 +81,25 @@ def find_bookmarks_file(browser: BrowserDefinition, home: Path = None) -> Option
     for candidate in browser.candidate_paths:
         path = home / candidate
         if path.is_file():
+            return path
+    return None
+
+
+def find_export_target(browser: BrowserDefinition, home: Path = None) -> Optional[Path]:
+    """Wie find_bookmarks_file, aber fürs Zurückschreiben: neu installierte
+    Browser legen ihre Bookmarks-Datei oft erst beim ersten selbst gesetzten
+    Lesezeichen an, nicht schon beim ersten Start. Für den Export reicht ein
+    existierendes Profilverzeichnis (Browser wurde mindestens einmal
+    gestartet) -- die Datei selbst wird beim Schreiben neu angelegt, falls
+    sie noch fehlt."""
+    home = home if home is not None else Path.home()
+    for candidate in browser.candidate_paths:
+        path = home / candidate
+        if path.is_file():
+            return path
+    for candidate in browser.candidate_paths:
+        path = home / candidate
+        if path.parent.is_dir():
             return path
     return None
 

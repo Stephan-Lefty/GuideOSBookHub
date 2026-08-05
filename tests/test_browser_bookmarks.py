@@ -3,8 +3,8 @@ import json
 import pytest
 
 from core.browser_bookmarks import (
-    BrowserDefinition, export_to_chromium_json, find_bookmarks_file, is_browser_running,
-    parse_chromium_bookmarks, repository_to_tree,
+    BrowserDefinition, export_to_chromium_json, find_bookmarks_file, find_export_target,
+    is_browser_running, parse_chromium_bookmarks, repository_to_tree,
 )
 from core.database import Database
 from core.importer import ImportedBookmark, ImportedFolder, import_into_repository
@@ -98,6 +98,40 @@ def test_find_bookmarks_file_returns_none_when_missing(tmp_path):
     )
 
     assert find_bookmarks_file(browser, home=tmp_path) is None
+
+
+def test_find_export_target_returns_existing_bookmarks_file(tmp_path):
+    profile_dir = tmp_path / ".config" / "vivaldi" / "Default"
+    profile_dir.mkdir(parents=True)
+    bookmarks_file = profile_dir / "Bookmarks"
+    bookmarks_file.write_text("{}")
+
+    browser = BrowserDefinition(
+        "vivaldi", "Vivaldi", [".config/vivaldi/Default/Bookmarks"]
+    )
+
+    assert find_export_target(browser, home=tmp_path) == bookmarks_file
+
+
+def test_find_export_target_returns_target_path_when_profile_exists_without_bookmarks(tmp_path):
+    # Neu installierte Browser legen die Bookmarks-Datei oft erst beim ersten
+    # selbst gesetzten Lesezeichen an, nicht schon beim ersten Start.
+    profile_dir = tmp_path / ".config" / "vivaldi" / "Default"
+    profile_dir.mkdir(parents=True)
+
+    browser = BrowserDefinition(
+        "vivaldi", "Vivaldi", [".config/vivaldi/Default/Bookmarks"]
+    )
+
+    assert find_export_target(browser, home=tmp_path) == profile_dir / "Bookmarks"
+
+
+def test_find_export_target_returns_none_when_profile_dir_missing(tmp_path):
+    browser = BrowserDefinition(
+        "vivaldi", "Vivaldi", [".config/vivaldi/Default/Bookmarks"]
+    )
+
+    assert find_export_target(browser, home=tmp_path) is None
 
 
 def test_end_to_end_parse_and_import(repo):
@@ -200,6 +234,16 @@ def test_export_merge_adds_new_and_skips_duplicate_urls():
     bar_children = result["roots"]["bookmark_bar"]["children"]
     top_urls = {c["url"] for c in bar_children if c["type"] == "url"}
     assert top_urls == {"https://existing.example.com", "https://new.example.com"}
+
+
+def test_export_without_existing_bookmarks_file_builds_from_empty_state():
+    # find_export_target liefert einen Zielpfad, auch wenn der Browser noch
+    # keine eigene Bookmarks-Datei angelegt hat (frisch installiert/gestartet).
+    result = json.loads(export_to_chromium_json(None, _simple_export_tree(), "replace"))
+
+    bar_children = result["roots"]["bookmark_bar"]["children"]
+    urls = {c["url"] for c in bar_children if c["type"] == "url"}
+    assert urls == {"https://new.example.com"}
 
     subfolder = next(c for c in bar_children if c["name"] == "Unterordner")
     nested_urls = [c["url"] for c in subfolder["children"] if c["type"] == "url"]

@@ -1,3 +1,5 @@
+import sqlite3
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
@@ -5,10 +7,12 @@ from PyQt6.QtWidgets import (
 )
 
 from core.browser_bookmarks import CHROMIUM_BROWSERS, find_bookmarks_file, parse_chromium_bookmarks
+from core.firefox_bookmarks import find_places_db, import_firefox_bookmarks, is_firefox_running
 from core.i18n import t
 from core.importer import import_into_repository, parse_netscape_html
 
 OTHER_FILE_ID = "__other_file__"
+FIREFOX_ID = "__firefox__"
 
 
 class BrowserImportDialog(QDialog):
@@ -36,6 +40,9 @@ class BrowserImportDialog(QDialog):
             item = QListWidgetItem(browser.label)
             item.setData(Qt.ItemDataRole.UserRole, browser.id)
             self.browser_list.addItem(item)
+        firefox_item = QListWidgetItem(t("import.firefox_label"))
+        firefox_item.setData(Qt.ItemDataRole.UserRole, FIREFOX_ID)
+        self.browser_list.addItem(firefox_item)
         other_item = QListWidgetItem(t("import.other_file_item"))
         other_item.setData(Qt.ItemDataRole.UserRole, OTHER_FILE_ID)
         self.browser_list.addItem(other_item)
@@ -62,6 +69,10 @@ class BrowserImportDialog(QDialog):
             self._import_from_html_file()
             return
 
+        if browser_id == FIREFOX_ID:
+            self._import_from_firefox()
+            return
+
         browser = next(b for b in CHROMIUM_BROWSERS if b.id == browser_id)
         path = find_bookmarks_file(browser)
         if path is None:
@@ -76,6 +87,30 @@ class BrowserImportDialog(QDialog):
             json_text = path.read_text(encoding="utf-8")
             root = parse_chromium_bookmarks(json_text)
         except (OSError, ValueError) as error:
+            QMessageBox.warning(self, t("import.failed_title"), str(error))
+            return
+
+        self._finish_import(root)
+
+    def _import_from_firefox(self):
+        if is_firefox_running():
+            QMessageBox.warning(
+                self, t("import.firefox_running_title"), t("import.firefox_running_text")
+            )
+            return
+
+        db_path = find_places_db()
+        if db_path is None:
+            QMessageBox.warning(
+                self, t("import.not_found_title"),
+                t("import.not_found_text", browser="Firefox")
+            )
+            self._import_from_html_file()
+            return
+
+        try:
+            root = import_firefox_bookmarks(db_path)
+        except (sqlite3.Error, OSError) as error:
             QMessageBox.warning(self, t("import.failed_title"), str(error))
             return
 

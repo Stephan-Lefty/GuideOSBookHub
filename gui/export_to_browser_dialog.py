@@ -1,14 +1,20 @@
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QPushButton, QMessageBox, QStackedWidget, QWidget, QRadioButton, QButtonGroup, QFrame
 )
 
 from core.browser_bookmarks import (
-    CHROMIUM_BROWSERS, export_to_chromium_json, find_bookmarks_file, is_browser_running,
+    CHROMIUM_BROWSERS, export_to_chromium_json, find_export_target, is_browser_running,
     repository_to_tree, write_bookmarks_file,
 )
 from core.i18n import t
+
+
+# Lesbar auf hellem und dunklem QListWidget-Hintergrund gleichermaßen (siehe gui/theme.py).
+_FOUND_COLOR = QColor("#2fb344")
+_NOT_FOUND_COLOR = QColor("#e5484d")
 
 
 def _step_titles():
@@ -81,12 +87,14 @@ class ExportToBrowserDialog(QDialog):
         v.addWidget(label)
 
         self.browser_list = QListWidget()
+        self.browser_list.setStyleSheet("QListWidget { font-size: 15px; } QListWidget::item { padding: 6px 4px; }")
         first_enabled_row = None
         for row, browser in enumerate(CHROMIUM_BROWSERS):
-            found = find_bookmarks_file(browser) is not None
+            found = find_export_target(browser) is not None
             status = t("export.found") if found else t("export.not_found")
             item = QListWidgetItem(f"{browser.label} — {status}")
             item.setData(Qt.ItemDataRole.UserRole, browser.id)
+            item.setForeground(_FOUND_COLOR if found else _NOT_FOUND_COLOR)
             if not found:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
             elif first_enabled_row is None:
@@ -148,7 +156,7 @@ class ExportToBrowserDialog(QDialog):
     def _update_step_ui(self):
         index = self.stack.currentIndex()
         self.step_label.setText(t("export.step_label", step=index + 1, title=_step_titles()[index]))
-        self.back_button.setEnabled(index > 0)
+        self.back_button.setVisible(index > 0)
         self.next_button.setText(t("export.write_button") if index == 2 else t("export.next_button"))
 
         if index == 2:
@@ -189,7 +197,7 @@ class ExportToBrowserDialog(QDialog):
             )
             return
 
-        path = find_bookmarks_file(browser)
+        path = find_export_target(browser)
         if path is None:
             QMessageBox.warning(
                 self, t("export.not_found_title"),
@@ -198,7 +206,7 @@ class ExportToBrowserDialog(QDialog):
             return
 
         try:
-            existing_text = path.read_text(encoding="utf-8")
+            existing_text = path.read_text(encoding="utf-8") if path.is_file() else None
             tree = repository_to_tree(self.repo)
             new_text = export_to_chromium_json(existing_text, tree, strategy)
             write_bookmarks_file(path, new_text)

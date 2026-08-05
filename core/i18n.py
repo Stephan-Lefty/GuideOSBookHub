@@ -54,7 +54,12 @@ _TRANSLATIONS = {
             "Deine Lesezeichen werden automatisch gefunden und importiert."
         ),
         "import.intro": "Welchen Browser möchtest du importieren?",
-        "import.other_file_item": "Andere Datei auswählen (z.B. Firefox-Export) …",
+        "import.firefox_label": "Firefox",
+        "import.firefox_running_title": "Firefox läuft noch",
+        "import.firefox_running_text": (
+            "Firefox läuft noch. Bitte vollständig schließen und erneut versuchen."
+        ),
+        "import.other_file_item": "Andere Datei auswählen (HTML-Export) …",
         "import.skip_button": "Überspringen",
         "import.cancel_button": "Abbrechen",
         "import.import_button": "Importieren",
@@ -304,7 +309,12 @@ _TRANSLATIONS = {
             "Your bookmarks will be found and imported automatically."
         ),
         "import.intro": "Which browser would you like to import?",
-        "import.other_file_item": "Choose another file (e.g. Firefox export) …",
+        "import.firefox_label": "Firefox",
+        "import.firefox_running_title": "Firefox still running",
+        "import.firefox_running_text": (
+            "Firefox is still running. Please close it completely and try again."
+        ),
+        "import.other_file_item": "Choose another file (HTML export) …",
         "import.skip_button": "Skip",
         "import.cancel_button": "Cancel",
         "import.import_button": "Import",
